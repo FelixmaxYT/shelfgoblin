@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shelf Goblin - Scan</title>
+    <link rel="stylesheet" href="/static/index.css">
+    <!-- v5 -->
+<script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+</head>
+<body>
+    <div class="header">
+        <div class="logoimg">
+            <img src="/static/logo.svg" alt="Shelf Goblin Logo" height="50">
+        </div>
+        <div class="pagename">
+            Scan
+        </div>
+    </div>
+    <div class="content">
+        
+        <div class="scanboxcamera">
+             <video id="video" width="320" height="240" autoplay muted playsinline style="border:1px solid #ccc;"></video>
+             
+            <div class="currentproduct">
+                <div id="barcode-result" style="margin-top:10px;font-weight:bold;"></div>
+                <div class="currentscanneditem" id="currentscanneditem">
+
+                </div>
+                <div class="buttonrow" id="buttonrow">
+                    <button id="skip-button" class="buttonrowbtn" onclick="skip()">Skip</button>
+                    <button id="enter-manually-button" class="buttonrowbtn">Enter Manually</button>
+                </div>
+            </div>
+
+
+        </div>
+        <div class="scanneditemsheadline">
+            Scanned Items
+        </div>
+        <div class="scanneditems" id="scanneditemslist">
+            <!-- <div class="scanneditementry">
+                <div class="productpic">
+                    <img src="/static/placeholder.png" alt="Product Image" width="50" >
+                </div>
+                <div class="infobox">
+                    <div class="productname">
+                        <span class="productname-text">Energy Peach</span>
+                        <span class="productmanufacturer">Monster</span>
+                        <span class="productexpiry">Expiry: 2023-12-31</span>
+                    </div>
+                </div>
+            </div> -->
+        </div>
+    </div>
+    <script>
+    const video = document.getElementById('video');
+    const resultDiv = document.getElementById('barcode-result');
+    const scanneditems = document.getElementById('scanneditemslist');
+    const currentscanneditem = document.getElementById('currentscanneditem');
+    const buttonrow = document.getElementById('buttonrow');
+
+    var lastproductname = '';
+    var lastproductmanufacturer = '';
+    var lastproductexpiry = '';
+    var lastproductimage = '';
+
+    var scanning = true;
+
+(async () => {
+    
+
+    
+
+    if (!('BarcodeDetector' in window)) {
+        resultDiv.textContent = 'Barcode Detector API not supported in this browser.';
+        return;
+    }
+
+    const barcodeDetector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'code_128', 'qr_code', 'upc_a', 'upc_e'] });
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        video.srcObject = stream;
+    } catch (err) {
+        resultDiv.textContent = 'Camera access denied or not available.';
+        return;
+    }
+
+    async function scanFrame() {
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+            try {
+                if (scanning == true) {
+                    buttonrow.style.display = 'none';
+                const barcodes = await barcodeDetector.detect(video);
+                if (barcodes.length > 0 && scanning) {
+                    resultDiv.textContent = 'Barcode: ' + barcodes.map(b => b.rawValue).join(', ');
+
+                    scanning = false; // Stop further scanning
+                    // request to openfood facts api
+                    setTimeout(() => {
+                        
+                        // scanning = true; // Allow further scanning
+                    }, 2000); // Resume after 3 seconds
+
+                    let xml = new XMLHttpRequest();
+                    xml.open("GET", "https://world.openfoodfacts.org/api/v2/product/" + barcodes[0].rawValue + ".json", true);
+                    xml.onload = function () {
+                        if (xml.status === 200) {
+                            let product = JSON.parse(xml.responseText);
+                            if (product && product.product) {
+                                let item = document.createElement('div');
+
+                                lastproductname = product.product.product_name || 'Unknown Product';
+                                lastproductmanufacturer = product.product.brands || 'Unknown Manufacturer';
+                                lastproductexpiry = 'Scan date or add manually'; // Placeholder for expiry
+                                lastproductimage = product.product.image_front_url || '/static/placeholder.png';
+
+                                item.innerHTML = `
+                                <div class="scanneditementry">
+                                    <div class="productpic">
+                                        <img src="${product.product.image_front_url}" alt="Product Image" width="50" >
+                                    </div>
+                                    <div class="infobox">
+                                        <div class="productname">
+                                            <span class="productname-text">${product.product.product_name}</span>
+                                            <span class="productmanufacturer">${product.product.brands}</span>
+                                            <span class="productexpiry">Expiry: Scan date or add manually</span>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                `
+                                currentscanneditem.appendChild(item);
+                            }
+                        }
+                    };
+                    xml.send();
+
+                } else if (scanning == true) {
+                    resultDiv.textContent = 'No barcode detected.';
+                }
+            }
+            else {
+                resultDiv.textContent = 'Scanning Best Before date...';
+                buttonrow.style.display = 'flex';
+
+                //ocr on video stream
+                // const canvas = document.createElement('canvas');
+                // canvas.width = video.videoWidth;
+                // canvas.height = video.videoHeight;
+                // const ctx = canvas.getContext('2d');
+                // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                // const ocrResult = await Tesseract.recognize(imageData, 'eng', {
+                //     logger: info => console.log(info)
+                // });
+
+                // const text = ocrResult.data.text.trim();
+                // if (text) {
+                //     resultDiv.textContent = 'Detected text: ' + text;
+                //     // Here you can add logic to parse the date from the text
+                //     // For now, we will just display it
+                //     additemtolist(text, 'Unknown Manufacturer', 'Unknown Expiry');
+                // } else {
+                //     resultDiv.textContent = 'No text detected.';
+                // }
+                
+
+
+
+
+            }
+            } catch (e) {
+                resultDiv.textContent = 'Detection error: ' + e;
+            }
+        
+        }
+        requestAnimationFrame(scanFrame);
+    }
+
+    video.addEventListener('play', scanFrame);
+})();
+
+function additemtolist(name, manufacturer, expiry, image) {
+    let item = document.createElement('div');
+    item.className = 'scanneditementry';
+    item.innerHTML = `
+        <div class="productpic">
+            <img src="${image}" alt="Product Image" width="50">
+        </div>
+        <div class="infobox">
+            <div class="productname">
+                <span class="productname-text">${name}</span>
+                <span class="productmanufacturer">${manufacturer}</span>
+                <span class="productexpiry">Expiry: ${expiry}</span>
+            </div>
+        </div>
+    `;
+    scanneditems.appendChild(item);
+}
+
+function skip() {
+        scanning = true; // Allow further scanning
+        
+        buttonrow.style.display = 'none';
+        currentscanneditem.innerHTML = ''; // Clear current scanned item
+        additemtolist(lastproductname, lastproductmanufacturer, "not added", lastproductimage);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Source+Code+Pro:ital,wght@0,200..900;1,200..900&display=swap');
+body{
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f4f4;
+    color: #000000;
+    
+    margin: 0;
+    padding: 0;
+}
+.header{
+    background: #ffffff;
+    color: #000000;
+    padding: 20px 0;
+    padding-left: 10px;
+    padding-right: 10px;
+    display: flex;
+    gap: 20px;
+}
+.pagename{
+    font-size: 24px;
+    font-weight: 600;
+    color: #000000;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+.scanneditementry {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    
+}
+.scanneditems{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.currentscanneditem{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.content{
+    padding: 20px;
+    
+    margin: 0 auto;
+}
+.scanneditementry {
+    display: flex;
+    align-items: center;
+    
+    gap: 10px;
+}
+
+.productname{
+    display: flex;
+    flex-direction: column;
+}
+.buttonrow{
+    display: none;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+}
+.buttonrowbtn{
+    flex-grow: 1;
+    padding: 10px;
+    background-color: #afafaf;
+    color: rgb(0, 0, 0);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.scanneditemsheadline{
+    font-size: 20px;
+    font-weight: 600;
+    color: #000000;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}

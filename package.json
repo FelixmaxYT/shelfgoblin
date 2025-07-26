@@ -1,0 +1,14 @@
+{
+  "name": "shelfgoblin",
+  "version": "1.0.0",
+  "description": "Tracks what food items you have, when it goes bad and what you can make with it",
+  "main": "index.js",
+  "scripts": {
+    "test": "node ."
+  },
+  "author": "Felixmax_",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
