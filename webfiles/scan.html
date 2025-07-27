@@ -7,21 +7,50 @@
     <link rel="stylesheet" href="/static/index.css">
     <!-- v5 -->
 <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<script async src="https://docs.opencv.org/4.5.2/opencv.js" type="text/javascript"></script>
+
+
 </head>
 <body>
-    <div class="header">
-        <div class="logoimg">
-            <img src="/static/logo.svg" alt="Shelf Goblin Logo" height="50">
+    <div class="navbar ">
+        <a href="/">
+        <div class="navbarentry ">
+            <span class="material-symbols-outlined">
+            grocery
+            </span>
         </div>
-        <div class="pagename">
-            Scan
+        </a>
+        <a href="#">
+        <div class="navbarentry navbarselected">
+            <span class="material-symbols-outlined">
+            barcode_scanner
+            </span>
         </div>
+        </a>
+        <a href="/cook">
+        <div class="navbarentry ">
+            <span class="material-symbols-outlined">
+            skillet
+            </span>
+        </div>
+        </a>
+        <a href="/cook">
+        <div class="navbarentry ">
+            <span class="material-symbols-outlined">
+            settings
+            </span>
+        </div>
+        </a>
     </div>
     <div class="content">
-        
+        <!-- Add this inside your .scanboxcamera div or elsewhere for debugging -->
+<div id="debug-canvas"></div>
         <div class="scanboxcamera">
-             <video id="video" width="320" height="240" autoplay muted playsinline style="border:1px solid #ccc;"></video>
-             
+            <div class="scancamerwrapper">
+                <!-- <div class="scanoverlay"></div> -->
+             <video id="video" class="scanboxvideo" width="320" height="240" autoplay muted playsinline style="border:1px solid #ccc;"></video>
+            </div>
             <div class="currentproduct">
                 <div id="barcode-result" style="margin-top:10px;font-weight:bold;"></div>
                 <div class="currentscanneditem" id="currentscanneditem">
@@ -142,29 +171,59 @@
                 }
             }
             else {
-                resultDiv.textContent = 'Scanning Best Before date...';
+                // resultDiv.textContent = 'Scanning Best Before date...';
                 buttonrow.style.display = 'flex';
+                // activate flashlight if available
+                if (video.srcObject.getVideoTracks().length > 0) {
+                    const track = video.srcObject.getVideoTracks()[0];
+                    if (track.getCapabilities().torch) {
+                        track.applyConstraints({ advanced: [{ torch: true }] });
+                    }
+                }
+                
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
 
-                //ocr on video stream
-                // const canvas = document.createElement('canvas');
-                // canvas.width = video.videoWidth;
-                // canvas.height = video.videoHeight;
-                // const ctx = canvas.getContext('2d');
-                // ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                // const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                // const ocrResult = await Tesseract.recognize(imageData, 'eng', {
-                //     logger: info => console.log(info)
-                // });
+                // document.getElementById('debug-canvas').innerHTML = ''; // Clear previous
+                // document.getElementById('debug-canvas').appendChild(canvas);
+                
 
-                // const text = ocrResult.data.text.trim();
-                // if (text) {
-                //     resultDiv.textContent = 'Detected text: ' + text;
-                //     // Here you can add logic to parse the date from the text
-                //     // For now, we will just display it
-                //     additemtolist(text, 'Unknown Manufacturer', 'Unknown Expiry');
-                // } else {
-                //     resultDiv.textContent = 'No text detected.';
-                // }
+
+                // Pass the canvas element, not imageData
+                const ocrResult = await Tesseract.recognize(canvas, 'eng', {
+                    tessedit_char_whitelist: '0123456789./-',
+                    logger: info => console.log(info)
+                });
+
+                const text = ocrResult.data.text.trim();
+                if (text) {
+                    
+                    // regex text
+                    const dateRegex = /\b\d{2}([./])(\d{2}(\1\d{4})?|\d{4})\b/; 
+                    const match = text.match(dateRegex);
+                    if (match) {
+                        const date = match[0];
+                        // Assuming the date is in the format DD/MM/YYYY or MM/DD/YYYY
+                        // lastproductexpiry = date; // Update expiry with detected date
+                        resultDiv.textContent = 'last read: ' + date;
+                        activeselection = "";
+                        additemtolist(lastproductname, lastproductmanufacturer, date, lastproductimage);
+                        
+                    } else {
+                        lastproductexpiry = 'Unknown Expiry'; // Fallback if no date found
+                    }
+                    
+
+                    // Here you can add logic to parse the date from the text
+                    // For now, we will just display it
+                    //additemtolist(text, 'Unknown Manufacturer', 'Unknown Expiry');
+                } else {
+                    resultDiv.textContent = 'No text detected.';
+                }
                 
 
 
@@ -198,6 +257,10 @@ function additemtolist(name, manufacturer, expiry, image) {
         </div>
     `;
     scanneditems.appendChild(item);
+    scanning = true; // Allow further scanning
+        
+        buttonrow.style.display = 'none';
+        currentscanneditem.innerHTML = ''; // Clear current scanned item
 }
 
 function skip() {
