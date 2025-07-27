@@ -13,6 +13,10 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/webfiles/scan.html');
     });
 
+    app.get("/cook", (req, res) => {
+    res.sendFile(__dirname + '/webfiles/cook.html');
+    });
+
 
 app.listen(port, () => {
     console.log(`App listening at http://localhost:${port}`);
