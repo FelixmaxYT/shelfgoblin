@@ -191,6 +191,8 @@ body{
 .reciepieimage {
     width: 100%;
     height: auto;
+    max-height: 150px;
+    object-fit: cover;
     border-radius: 5px;
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
@@ -231,4 +233,38 @@ body{
     background-color: #76c7c0;
     border-radius: 10px;
     transition: width 0.3s ease;
+}
+.bottommargin {
+    margin-bottom: 15px;
+}
+.tagbar {
+    display: flex;
+
+    overflow: scroll;
+    gap: 5px;
+    margin-top: 10px;
+}
+.tagentry{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 10px;
+    border-radius: 50px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    color: #000000;
+}
+.tagbarentry-icon {
+    font-size: 16px;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.tagbarentryiconel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
 }
